@@ -326,7 +326,7 @@ def Three_Step_Search(imgt,imgt_1,block_size,search_range):
     print(sum)
     return Motion_Vector
 
-def Diamond_Search (imgt,imgt_1,block_size):
+def Diamond_Search(imgt,imgt_1,block_size):
 
     y, x = imgt.shape
     imgt = np.array(imgt, dtype = np.uint8)
@@ -361,32 +361,36 @@ def Diamond_Search (imgt,imgt_1,block_size):
             j_o = j
             min1 = 0
 
-            while min1 != 4 :
+            while min1 != 4:
                 index_1 = 0
 
                 for u in range(i-2,i+3):
                     for v in range(j-2,j+3):
-                         overlap= 100
-                         if (u+v == i+j-2 or u+v == i+j or u+v == i+j+2) and (u,v) != (i-2,j+2) and (u,v) != (i+2,j-2):
+                        overlap= 100
+                        if (
+                            u + v in [i + j - 2, i + j, i + j + 2]
+                            and (u, v) != (i - 2, j + 2)
+                            and (u, v) != (i + 2, j - 2)
+                        ):
 
-                            for k in range(0,9):
+                            for k in range(9):
                                 if Index_array_1[k][0] == u and Index_array_1[k][1] == v :
                                     overlap = k
 
                             if overlap == 100:
                                 Frame_t_1 = np.array(imgt_1[u-half_size:u+half_size,v-half_size:v+half_size],dtype ='int16')
                                 Index_array_1[index_1] = [u,v]
-                                if Frame_t_1.shape != (block_size, block_size):
-                                    SAD_1[index_1] = float('inf')
-                                    SAD_temp[index_1] = float('inf')
-                                else:
+                                if Frame_t_1.shape == (block_size, block_size):
                                        #Sub = Frame_t - Frame_t_1
                                     SAD_1[index_1] = np.sum(np.absolute(Frame_t - Frame_t_1))
                                     SAD_temp[index_1] = SAD_1[index_1]
                                     sum += 1
-                            elif overlap !=100 :
-                                 SAD_1[index_1] = SAD_temp[overlap]
-                                 Index_array_1[index_1] = [u, v]
+                                else:
+                                    SAD_1[index_1] = float('inf')
+                                    SAD_temp[index_1] = float('inf')
+                            else:
+                                SAD_1[index_1] = SAD_temp[overlap]
+                                Index_array_1[index_1] = [u, v]
 
                             index_1 += 1
 
@@ -396,16 +400,16 @@ def Diamond_Search (imgt,imgt_1,block_size):
 
             index_2 = 0
             for t in range(i-1,i+2):
-                 for s in range(j-1,j+2):
-                      if t+s == i+j-1 or t+s == i+j+1 or (t,s) == (i,j) :
-                            Frame_t_1 = np.array(imgt_1[t-half_size:t+half_size,s-half_size:s+half_size],dtype = 'int16')
-                            Index_array_2[index_2] = [t,s]
-                            if Frame_t_1.shape != (block_size, block_size):
-                                SAD_2[index_2] = float('inf')
-                            else:
-                                SAD_2[index_2] = np.sum(np.absolute(Frame_t - Frame_t_1))
-                                sum += 1
-                            index_2 +=1
+                for s in range(j-1,j+2):
+                    if t+s == i+j-1 or t+s == i+j+1 or (t,s) == (i,j):
+                        Frame_t_1 = np.array(imgt_1[t-half_size:t+half_size,s-half_size:s+half_size],dtype = 'int16')
+                        Index_array_2[index_2] = [t,s]
+                        if Frame_t_1.shape == (block_size, block_size):
+                            SAD_2[index_2] = np.sum(np.absolute(Frame_t - Frame_t_1))
+                            sum += 1
+                        else:
+                            SAD_2[index_2] = float('inf')
+                        index_2 +=1
             min2 = np.argmin(SAD_2)
             i = Index_array_2[min2][0]
             j = Index_array_2[min2][1]
@@ -594,111 +598,111 @@ def Simple_and_Efficient_search (imgt,imgt_1,block_size):
     return Motion_Vector
 
 def New_Three_step_Search(imgt,imgt_1,block_size):
-        y, x = imgt.shape
-        imgt = np.array(imgt, dtype=np.uint8)
-        imgt_1 = np.array(imgt_1, dtype=np.uint8)
+    y, x = imgt.shape
+    imgt = np.array(imgt, dtype=np.uint8)
+    imgt_1 = np.array(imgt_1, dtype=np.uint8)
 
-        SAD_1 = np.zeros(17)
-        SAD_2 = np.zeros(9)
+    SAD_1 = np.zeros(17)
+    SAD_2 = np.zeros(9)
 
-        SAD_1 = np.array(SAD_1, dtype='float')
-        SAD_2 = np.array(SAD_2, dtype='float')
+    SAD_1 = np.array(SAD_1, dtype='float')
+    SAD_2 = np.array(SAD_2, dtype='float')
 
-        Motion_Vector = []
-        Motion_Vector = np.array(Motion_Vector, dtype='int16')
+    Motion_Vector = []
+    Motion_Vector = np.array(Motion_Vector, dtype='int16')
 
-        Index_array_1 = np.zeros((17,2))
-        Index_array_1 = np.array(Index_array_1, dtype='int16')
+    Index_array_1 = np.zeros((17,2))
+    Index_array_1 = np.array(Index_array_1, dtype='int16')
 
-        Index_array_2 = np.zeros((9,2))
-        Index_array_2 = np.array(Index_array_2, dtype='int16')
+    Index_array_2 = np.zeros((9,2))
+    Index_array_2 = np.array(Index_array_2, dtype='int16')
 
-        half_size = int(block_size / 2)
-        p = int(y / block_size)
-        q = int(x / block_size)
-        sum = 0
-        for i in range(half_size, y, block_size):
-            for j in range(half_size, x, block_size):
-                Frame_t = np.array(imgt[i - half_size:i + half_size, j - half_size:j + half_size], dtype='int16')
-                i_o = i
-                j_o = j
-                index = 0
-                search_range = 4
-                print(i,j)
-                for u in range(i - 1, i + 2):
-                    for v in range(j - 1, j + 2):
-                            Frame_t_1 = np.array(imgt_1[u - half_size:u + half_size, v - half_size:v + half_size],dtype='int16')
-                            Index_array_1[index] = [u,v]
-                            if Frame_t_1.shape != (block_size, block_size):
-                                SAD_1[index] = float('inf')
-                            else:
-                                SAD_1[index] = np.sum(np.absolute(Frame_t - Frame_t_1))
+    half_size = int(block_size / 2)
+    p = int(y / block_size)
+    q = int(x / block_size)
+    sum = 0
+    for i in range(half_size, y, block_size):
+        i_o = i
+        for j in range(half_size, x, block_size):
+            Frame_t = np.array(imgt[i - half_size:i + half_size, j - half_size:j + half_size], dtype='int16')
+            j_o = j
+            index = 0
+            search_range = 4
+            print(i, j_o)
+            for u in range(i - 1, i + 2):
+                for v in range(j_o - 1, j_o + 2):
+                    Frame_t_1 = np.array(imgt_1[u - half_size:u + half_size, v - half_size:v + half_size],dtype='int16')
+                    Index_array_1[index] = [u,v]
+                    if Frame_t_1.shape != (block_size, block_size):
+                        SAD_1[index] = float('inf')
+                    else:
+                        SAD_1[index] = np.sum(np.absolute(Frame_t - Frame_t_1))
+                        sum += 1
+                    index += 1
+
+            for u in range(i-4,i+5,4):
+                for v in range(j_o - 4, j_o + 5, 4):
+                    if (u, v) != (i, j_o):
+                        Frame_t_1 = np.array(imgt_1[u - half_size: u+half_size, v-half_size:v+half_size],dtype = 'int16')
+                        Index_array_1[index] = [u, v]
+                        if Frame_t_1.shape == (block_size, block_size):
+                            SAD_1[index] = np.sum(np.absolute(Frame_t - Frame_t_1))
+                            sum += 1
+                        else:
+                            SAD_1[index] = float('inf')
+                        index += 1
+
+            min = np.argmin(SAD_1)
+
+            if min == 4:
+                Motion_Vector = np.append(Motion_Vector,(0,0))
+
+            else:
+                if min <= 8:
+                    u = Index_array_1[min][0]
+                    v = Index_array_1[min][1]
+                    index_2 = 0
+                    for t in range(u-1,u+2):
+                        for s in range(v-1,v+2):
+                            Frame_t_1 = np.array(imgt_1[t-half_size:t+half_size,s-half_size:s+half_size],dtype = 'int16')
+                            Index_array_2[index_2] = [t,s]
+                            if Frame_t_1.shape == (block_size, block_size):
+                                SAD_2[index_2] = np.sum(np.absolute(Frame_t - Frame_t_1))
                                 sum += 1
-                            index += 1
-
-                for u in range(i-4,i+5,4):
-                    for v in range(j-4,j+5,4):
-                        if (u,v)!= (i,j):
-                            Frame_t_1 = np.array(imgt_1[u - half_size: u+half_size, v-half_size:v+half_size],dtype = 'int16')
-                            Index_array_1[index] = [u, v]
-                            if Frame_t_1.shape != (block_size, block_size):
-                                SAD_1[index] = float('inf')
                             else:
-                                SAD_1[index] = np.sum(np.absolute(Frame_t - Frame_t_1))
-                                sum += 1
-                            index += 1
+                                SAD_2[index_2] = float('inf')
+                            index_2 +=1
+                    min2 = np.argmin(SAD_2)
 
-                min = np.argmin(SAD_1)
+                    Motion_Vector = np.append(Motion_Vector,(Index_array_2[min2][0]-i_o,Index_array_2[min2][1]-j_o))
 
-                if min == 4 :
-                    Motion_Vector = np.append(Motion_Vector,(0,0))
 
                 else:
-                    if min <= 8 :
-                        u = Index_array_1[min][0]
-                        v = Index_array_1[min][1]
+                    u = Index_array_1[min][0]
+                    v = Index_array_1[min][1]
+
+                    while search_range > 0.5:
                         index_2 = 0
-                        for t in range(u-1,u+2):
-                            for s in range(v-1,v+2):
+                        for t in range(u-search_range,u+search_range+1,search_range):
+                            for s in range(v-search_range,v+search_range+1,search_range):
                                 Frame_t_1 = np.array(imgt_1[t-half_size:t+half_size,s-half_size:s+half_size],dtype = 'int16')
                                 Index_array_2[index_2] = [t,s]
-                                if  Frame_t_1.shape != (block_size, block_size):
-                                    SAD_2[index_2] = float('inf')
-                                else:
+                                if Frame_t_1.shape == (block_size, block_size):
                                     SAD_2[index_2] = np.sum(np.absolute(Frame_t - Frame_t_1))
                                     sum += 1
+                                else:
+                                    SAD_2[index_2] = float('inf')
                                 index_2 +=1
                         min2 = np.argmin(SAD_2)
+                        u = Index_array_2[min2][0]
+                        v = Index_array_2[min2][1]
+                        search_range = int(search_range/2)
 
-                        Motion_Vector = np.append(Motion_Vector,(Index_array_2[min2][0]-i_o,Index_array_2[min2][1]-j_o))
+                    Motion_Vector = np.append(Motion_Vector,(u-i_o,v-j_o))
 
-
-                    elif min > 8 :
-                        u = Index_array_1[min][0]
-                        v = Index_array_1[min][1]
-
-                        while search_range > 0.5:
-                            index_2 = 0
-                            for t in range(u-search_range,u+search_range+1,search_range):
-                                for s in range(v-search_range,v+search_range+1,search_range):
-                                    Frame_t_1 = np.array(imgt_1[t-half_size:t+half_size,s-half_size:s+half_size],dtype = 'int16')
-                                    Index_array_2[index_2] = [t,s]
-                                    if  Frame_t_1.shape != (block_size, block_size):
-                                        SAD_2[index_2] = float('inf')
-                                    else:
-                                        SAD_2[index_2] = np.sum(np.absolute(Frame_t - Frame_t_1))
-                                        sum += 1
-                                    index_2 +=1
-                            min2 = np.argmin(SAD_2)
-                            u = Index_array_2[min2][0]
-                            v = Index_array_2[min2][1]
-                            search_range = int(search_range/2)
-
-                        Motion_Vector = np.append(Motion_Vector,(u-i_o,v-j_o))
-
-        Motion_Vector = Motion_Vector.reshape(p, q, 2)
-        print(sum)
-        return Motion_Vector
+    Motion_Vector = Motion_Vector.reshape(p, q, 2)
+    print(sum)
+    return Motion_Vector
 
 def EBMA_Reconstruction(imgt_1, Motion_vector,block_size):
 
